@@ -231,7 +231,23 @@ func (s *dealProposals{{.v}}) array() adt.Array {
 }
 
 func fromV{{.v}}DealProposal(v{{.v}} market{{.v}}.DealProposal) DealProposal {
-	return (DealProposal)(v{{.v}})
+    {{if (ge .v 7)}}
+        return DealProposal{
+            PieceCID:             v{{.v}}.PieceCID,
+            PieceSize:            v{{.v}}.PieceSize,
+            VerifiedDeal:         v{{.v}}.VerifiedDeal,
+            Client:               v{{.v}}.Client,
+            Provider:             v{{.v}}.Provider,
+            Label:                string(v{{.v}}.Label),
+            StartEpoch:           v{{.v}}.StartEpoch,
+            EndEpoch:             v{{.v}}.EndEpoch,
+            StoragePricePerEpoch: v{{.v}}.StoragePricePerEpoch,
+            ProviderCollateral:   v{{.v}}.ProviderCollateral,
+            ClientCollateral:     v{{.v}}.ClientCollateral,
+        }
+    {{else}}
+	    return (DealProposal)(v{{.v}})
+	{{end}}
 }
 
 func (s *state{{.v}}) GetState() interface{} {
