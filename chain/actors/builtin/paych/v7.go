@@ -112,3 +112,19 @@ func (ls *laneState7) Redeemed() (big.Int, error) {
 func (ls *laneState7) Nonce() (uint64, error) {
 	return ls.LaneState.Nonce, nil
 }
+
+func toV7SignedVoucher(v0 SignedVoucher) paych7.SignedVoucher {
+	return paych7.SignedVoucher{
+		ChannelAddr:     v0.ChannelAddr,
+		TimeLockMin:     v0.TimeLockMin,
+		TimeLockMax:     v0.TimeLockMax,
+		SecretHash:      v0.SecretPreimage,
+		Extra:           v0.Extra,
+		Lane:            v0.Lane,
+		Nonce:           v0.Nonce,
+		Amount:          v0.Amount,
+		MinSettleHeight: v0.MinSettleHeight,
+		Merges:          v0.Merges,
+		Signature:       v0.Signature,
+	}
+}

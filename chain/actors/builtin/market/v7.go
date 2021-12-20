@@ -219,7 +219,19 @@ func (s *dealProposals7) array() adt.Array {
 }
 
 func fromV7DealProposal(v7 market7.DealProposal) DealProposal {
-	return (DealProposal)(v7)
+	return DealProposal{
+		PieceCID:             v7.PieceCID,
+		PieceSize:            v7.PieceSize,
+		VerifiedDeal:         v7.VerifiedDeal,
+		Client:               v7.Client,
+		Provider:             v7.Provider,
+		Label:                string(v7.Label),
+		StartEpoch:           v7.StartEpoch,
+		EndEpoch:             v7.EndEpoch,
+		StoragePricePerEpoch: v7.StoragePricePerEpoch,
+		ProviderCollateral:   v7.ProviderCollateral,
+		ClientCollateral:     v7.ClientCollateral,
+	}
 }
 
 func (s *state7) GetState() interface{} {
