@@ -143,7 +143,7 @@ func (t *SectorInfo) MarshalCBOR(w io.Writer) error {
 		_, err := w.Write(cbg.CborNull)
 		return err
 	}
-	if _, err := w.Write([]byte{184, 33}); err != nil {
+	if _, err := w.Write([]byte{184, 32}); err != nil {
 		return err
 	}
 
@@ -655,39 +655,6 @@ func (t *SectorInfo) MarshalCBOR(w io.Writer) error {
 	} else {
 		if err := cbg.WriteCidBuf(scratch, w, *t.UpdateUnsealed); err != nil {
 			return xerrors.Errorf("failed to write cid field t.UpdateUnsealed: %w", err)
-		}
-	}
-
-	// t.ProveReplicaUpdate1Out (storage.ReplicaVanillaProofs) (slice)
-	if len("ProveReplicaUpdate1Out") > cbg.MaxLength {
-		return xerrors.Errorf("Value in field \"ProveReplicaUpdate1Out\" was too long")
-	}
-
-	if err := cbg.WriteMajorTypeHeaderBuf(scratch, w, cbg.MajTextString, uint64(len("ProveReplicaUpdate1Out"))); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, string("ProveReplicaUpdate1Out")); err != nil {
-		return err
-	}
-
-	if len(t.ProveReplicaUpdate1Out) > cbg.MaxLength {
-		return xerrors.Errorf("Slice value in field t.ProveReplicaUpdate1Out was too long")
-	}
-
-	if err := cbg.WriteMajorTypeHeaderBuf(scratch, w, cbg.MajArray, uint64(len(t.ProveReplicaUpdate1Out))); err != nil {
-		return err
-	}
-	for _, v := range t.ProveReplicaUpdate1Out {
-		if len(v) > cbg.ByteArrayMaxLen {
-			return xerrors.Errorf("Byte array in field v was too long")
-		}
-
-		if err := cbg.WriteMajorTypeHeaderBuf(scratch, w, cbg.MajByteString, uint64(len(v))); err != nil {
-			return err
-		}
-
-		if _, err := w.Write(v[:]); err != nil {
-			return err
 		}
 	}
 
@@ -1425,54 +1392,6 @@ func (t *SectorInfo) UnmarshalCBOR(r io.Reader) error {
 				}
 
 			}
-			// t.ProveReplicaUpdate1Out (storage.ReplicaVanillaProofs) (slice)
-		case "ProveReplicaUpdate1Out":
-
-			maj, extra, err = cbg.CborReadHeaderBuf(br, scratch)
-			if err != nil {
-				return err
-			}
-
-			if extra > cbg.MaxLength {
-				return fmt.Errorf("t.ProveReplicaUpdate1Out: array too large (%d)", extra)
-			}
-
-			if maj != cbg.MajArray {
-				return fmt.Errorf("expected cbor array")
-			}
-
-			if extra > 0 {
-				t.ProveReplicaUpdate1Out = make([][]uint8, extra)
-			}
-
-			for i := 0; i < int(extra); i++ {
-				{
-					var maj byte
-					var extra uint64
-					var err error
-
-					maj, extra, err = cbg.CborReadHeaderBuf(br, scratch)
-					if err != nil {
-						return err
-					}
-
-					if extra > cbg.ByteArrayMaxLen {
-						return fmt.Errorf("t.ProveReplicaUpdate1Out[i]: byte array too large (%d)", extra)
-					}
-					if maj != cbg.MajByteString {
-						return fmt.Errorf("expected byte array")
-					}
-
-					if extra > 0 {
-						t.ProveReplicaUpdate1Out[i] = make([]uint8, extra)
-					}
-
-					if _, err := io.ReadFull(br, t.ProveReplicaUpdate1Out[i][:]); err != nil {
-						return err
-					}
-				}
-			}
-
 			// t.ReplicaUpdateProof (storage.ReplicaUpdateProof) (slice)
 		case "ReplicaUpdateProof":
 

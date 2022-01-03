@@ -223,19 +223,16 @@ func (m *Sealing) handleSubmitReplicaUpdateFailed(ctx statemachine.Context, sect
 		case *ErrBadRU:
 			log.Errorf("bad replica update: %+v", err)
 			return ctx.Send(SectorRetryReplicaUpdate{})
-		case *ErrBadPR1:
+		case *ErrBadPR:
 			log.Errorf("bad PR1: +%v", err)
-			return ctx.Send(SectorRetryProveReplicaUpdate1{})
-		case *ErrBadPR2:
-			log.Errorf("bad PR2: +%v", err)
-			return ctx.Send(SectorRetryProveReplicaUpdate2{})
+			return ctx.Send(SectorRetryProveReplicaUpdate{})
 
 		case *ErrInvalidDeals:
 			return ctx.Send(SectorInvalidDealIDs{})
 		case *ErrExpiredDeals:
 			return ctx.Send(SectorDealsExpired{xerrors.Errorf("expired dealIDs in sector: %w", err)})
 		default:
-			log.Errorf("sanity check error not, not proceeding: +%v", err)
+			log.Errorf("sanity check error, not proceeding: +%v", err)
 			return xerrors.Errorf("checkPieces sanity check error: %w", err)
 		}
 	}
@@ -598,27 +595,3 @@ func recoveryPiecesToFix(ctx context.Context, api SealingAPI, sector SectorInfo,
 
 	return toFix, paddingPieces, nil
 }
-
-// func (m *Sealing) handleReplicaUpdateFailed(ctx statemachine.Context, sector SectorInfo) error {
-// 	if err := failedCooldown(ctx, sector); err != nil {
-// 		return err
-// 	}
-
-// 	return ctx.Send(SectorRetryReplicaUpdate{})
-// }
-
-// func (m *Sealing) handleProveReplicaUpdate1Failed(ctx statemachine.Context, sector SectorInfo) error {
-// 	if err := failedCooldown(ctx, sector); err != nil {
-// 		return err
-// 	}
-
-// 	return ctx.Send(SectorRetryProveReplicaUpdate1{})
-// }
-
-// func (m *Sealing) handleProveReplicaUpdate2Failed(ctx statemachine.Context, sector SectorInfo) error {
-// 	if err := failedCooldown(ctx, sector); err != nil {
-// 		return err
-// 	}
-
-// 	return ctx.Send(SectorRetryProveReplicaUpdate2{})
-// }

@@ -104,7 +104,6 @@ type SealerConfig struct {
 	AllowCommit              bool
 	AllowUnseal              bool
 	AllowReplicaUpdate       bool
-	AllowProveReplicaUpdate1 bool
 	AllowProveReplicaUpdate2 bool
 
 	// ResourceFiltering instructs the system which resource filtering strategy
@@ -147,7 +146,7 @@ func New(ctx context.Context, lstor *stores.Local, stor *stores.Remote, ls store
 	go m.sched.runSched()
 
 	localTasks := []sealtasks.TaskType{
-		sealtasks.TTCommit1, sealtasks.TTFinalize, sealtasks.TTFetch,
+		sealtasks.TTCommit1, sealtasks.TTProveReplicaUpdate1, sealtasks.TTFinalize, sealtasks.TTFetch,
 	}
 	if sc.AllowAddPiece {
 		localTasks = append(localTasks, sealtasks.TTAddPiece)
@@ -166,9 +165,6 @@ func New(ctx context.Context, lstor *stores.Local, stor *stores.Remote, ls store
 	}
 	if sc.AllowReplicaUpdate {
 		localTasks = append(localTasks, sealtasks.TTReplicaUpdate)
-	}
-	if sc.AllowProveReplicaUpdate1 {
-		localTasks = append(localTasks, sealtasks.TTProveReplicaUpdate1)
 	}
 	if sc.AllowProveReplicaUpdate2 {
 		localTasks = append(localTasks, sealtasks.TTProveReplicaUpdate2)

@@ -39,7 +39,6 @@ func (sb *Sealer) GenerateWindowPoSt(ctx context.Context, minerID abi.ActorID, s
 	if err != nil {
 		return nil, nil, xerrors.Errorf("gathering sector info: %w", err)
 	}
-	log.Errorf("got private sectors")
 
 	defer done()
 
@@ -48,7 +47,6 @@ func (sb *Sealer) GenerateWindowPoSt(ctx context.Context, minerID abi.ActorID, s
 	}
 
 	proof, faulty, err := ffi.GenerateWindowPoSt(minerID, privsectors, randomness)
-	log.Errorf("generated window post")
 
 	var faultyIDs []abi.SectorID
 	for _, f := range faulty {
@@ -57,7 +55,6 @@ func (sb *Sealer) GenerateWindowPoSt(ctx context.Context, minerID abi.ActorID, s
 			Number: f,
 		})
 	}
-	log.Errorf("coming back")
 	return proof, faultyIDs, err
 }
 
@@ -89,7 +86,7 @@ func (sb *Sealer) pubExtendedSectorToPriv(ctx context.Context, mid abi.ActorID, 
 		var cache string
 		var sealed string
 		if proveUpdate {
-			log.Errorf("Posting over updated sector for sector id: %d", s.SectorNumber)
+			log.Debugf("Posting over updated sector for sector id: %d", s.SectorNumber)
 			paths, d, err := sb.sectors.AcquireSector(ctx, sid, storiface.FTUpdateCache|storiface.FTUpdate, 0, storiface.PathStorage)
 			if err != nil {
 				log.Warnw("failed to acquire FTUpdateCache and FTUpdate of sector, skipping", "sector", sid.ID, "error", err)
@@ -100,7 +97,7 @@ func (sb *Sealer) pubExtendedSectorToPriv(ctx context.Context, mid abi.ActorID, 
 			cache = paths.UpdateCache
 			sealed = paths.Update
 		} else {
-			log.Errorf("Posting over sector key sector for sector id: %d", s.SectorNumber)
+			log.Debugf("Posting over sector key sector for sector id: %d", s.SectorNumber)
 			paths, d, err := sb.sectors.AcquireSector(ctx, sid, storiface.FTCache|storiface.FTSealed, 0, storiface.PathStorage)
 			if err != nil {
 				log.Warnw("failed to acquire FTCache and FTSealed of sector, skipping", "sector", sid.ID, "error", err)

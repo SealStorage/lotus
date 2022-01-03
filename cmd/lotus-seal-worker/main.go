@@ -163,6 +163,16 @@ var runCmd = &cli.Command{
 			Usage: "enable commit (32G sectors: all cores or GPUs, 128GiB Memory + 64GiB swap)",
 			Value: true,
 		},
+		&cli.BoolFlag{
+			Name:  "replica-update",
+			Usage: "enable replica update",
+			Value: true,
+		},
+		&cli.BoolFlag{
+			Name:  "prove-replica-update2",
+			Usage: "enable prove replica update 2",
+			Value: true,
+		},
 		&cli.IntFlag{
 			Name:  "parallel-fetch-limit",
 			Usage: "maximum fetch operations to run in parallel",
@@ -271,11 +281,8 @@ var runCmd = &cli.Command{
 		if cctx.Bool("replicaupdate") {
 			taskTypes = append(taskTypes, sealtasks.TTReplicaUpdate)
 		}
-		if cctx.Bool("provereplicaupdate1") {
+		if cctx.Bool("prove-replica-update2") {
 			taskTypes = append(taskTypes, sealtasks.TTProveReplicaUpdate2)
-		}
-		if cctx.Bool("provereplicaupdate2") {
-			taskTypes = append(taskTypes, sealtasks.TTProveReplicaUpdate1)
 		}
 
 		if len(taskTypes) == 0 {

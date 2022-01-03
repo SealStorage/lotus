@@ -36,8 +36,7 @@ type ErrNoPrecommit struct{ error }
 type ErrCommitWaitFailed struct{ error }
 
 type ErrBadRU struct{ error }
-type ErrBadPR1 struct{ error }
-type ErrBadPR2 struct{ error }
+type ErrBadPR struct{ error }
 
 func checkPieces(ctx context.Context, maddr address.Address, si SectorInfo, api SealingAPI) error {
 	tok, height, err := api.ChainHead(ctx)
@@ -213,11 +212,8 @@ func checkReplicaUpdate(ctx context.Context, maddr address.Address, si SectorInf
 	if si.UpdateSealed == nil {
 		return &ErrBadRU{xerrors.Errorf("nil sealed cid")}
 	}
-	if si.ProveReplicaUpdate1Out == nil {
-		return ErrBadPR1{xerrors.Errorf("nil PR1 vanilla proofs")}
-	}
 	if si.ReplicaUpdateProof == nil {
-		return ErrBadPR2{xerrors.Errorf("nil PR2 proof")}
+		return ErrBadPR{xerrors.Errorf("nil PR2 proof")}
 	}
 
 	return nil

@@ -22,7 +22,6 @@ import (
 )
 
 func (m *Sealing) handleWaitDeals(ctx statemachine.Context, sector SectorInfo) error {
-	log.Errorf("begin waiting for deals sector number: %d, pieces: %d\n", sector.SectorNumber, len(sector.Pieces))
 	var used abi.UnpaddedPieceSize
 	for _, piece := range sector.Pieces {
 		used += piece.Piece.Size.Unpadded()
@@ -44,7 +43,6 @@ func (m *Sealing) handleWaitDeals(ctx statemachine.Context, sector SectorInfo) e
 
 	started, err := m.maybeStartSealing(ctx, sector, used)
 	if err != nil || started {
-		log.Errorf("sending %d packing", sector.SectorNumber)
 		delete(m.openSectors, m.minerSectorID(sector.SectorNumber))
 
 		m.inputLk.Unlock()
@@ -53,8 +51,6 @@ func (m *Sealing) handleWaitDeals(ctx statemachine.Context, sector SectorInfo) e
 	}
 
 	if _, has := m.openSectors[sid]; !has {
-		log.Errorf("putting %d in open sectors map", sid)
-
 		m.openSectors[sid] = &openSector{
 			used: used,
 			maybeAccept: func(cid cid.Cid) error {
@@ -373,16 +369,23 @@ func (m *Sealing) updateInput(ctx context.Context, sp abi.RegisteredSealProof) e
 
 		toAssign[proposalCid] = struct{}{}
 
+		memo := make(map[abi.SectorNumber]abi.ChainEpoch)
+		expF := func(sn abi.SectorNumber) (abi.ChainEpoch, error) {
+			if exp, ok := memo[sn]; ok {
+				return exp, nil
+			}
+			onChainInfo, err := m.Api.StateSectorGetInfo(ctx, m.maddr, sn, TipSetToken{})
+			if err != nil {
+				return 0, err
+			}
+			memo[sn] = onChainInfo.Expiration
+			return onChainInfo.Expiration, nil
+		}
+
 		for id, sector := range m.openSectors {
 			avail := abi.PaddedPieceSize(ssize).Unpadded() - sector.used
 			// check that sector lifetime is long enough to fit deal using latest expiration from on chain
-			expF := func(sn abi.SectorNumber) (abi.ChainEpoch, error) {
-				onChainInfo, err := m.Api.StateSectorGetInfo(ctx, m.maddr, sn, TipSetToken{})
-				if err != nil {
-					return 0, err
-				}
-				return onChainInfo.Expiration, nil
-			}
+
 			ok, err := sector.dealFitsInLifetime(piece.deal.DealProposal.EndEpoch, expF)
 			if err != nil {
 				log.Errorf("failed to check expiration for cc Update sector %d", sector.number)

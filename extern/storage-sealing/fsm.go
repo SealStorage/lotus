@@ -148,20 +148,14 @@ var fsmPlanners = map[SectorState]func(events []statemachine.Event, state *Secto
 		on(SectorPacked{}, UpdateReplica),
 	),
 	UpdateReplica: planOne(
-		on(SectorReplicaUpdate{}, ProveReplicaUpdate1),
+		on(SectorReplicaUpdate{}, ProveReplicaUpdate),
 		on(SectorUpdateReplicaFailed{}, ReplicaUpdateFailed),
 		on(SectorDealsExpired{}, SnapDealsDealsExpired),
 		on(SectorInvalidDealIDs{}, SnapDealsRecoverDealIDs),
 	),
-	ProveReplicaUpdate1: planOne(
-		on(SectorProveReplicaUpdate1{}, ProveReplicaUpdate2),
-		on(SectorProveReplicaUpdate1Failed{}, ReplicaUpdateFailed),
-		on(SectorDealsExpired{}, SnapDealsDealsExpired),
-		on(SectorInvalidDealIDs{}, SnapDealsRecoverDealIDs),
-	),
-	ProveReplicaUpdate2: planOne(
-		on(SectorProveReplicaUpdate2{}, SubmitReplicaUpdate),
-		on(SectorProveReplicaUpdate2Failed{}, ReplicaUpdateFailed),
+	ProveReplicaUpdate: planOne(
+		on(SectorProveReplicaUpdate{}, SubmitReplicaUpdate),
+		on(SectorProveReplicaUpdateFailed{}, ReplicaUpdateFailed),
 		on(SectorDealsExpired{}, SnapDealsDealsExpired),
 		on(SectorInvalidDealIDs{}, SnapDealsRecoverDealIDs),
 	),
@@ -252,8 +246,7 @@ var fsmPlanners = map[SectorState]func(events []statemachine.Event, state *Secto
 		on(SectorRetrySubmitReplicaUpdateWait{}, ReplicaUpdateWait),
 		on(SectorRetrySubmitReplicaUpdate{}, SubmitReplicaUpdate),
 		on(SectorRetryReplicaUpdate{}, UpdateReplica),
-		on(SectorRetryProveReplicaUpdate1{}, ProveReplicaUpdate1),
-		on(SectorRetryProveReplicaUpdate2{}, ProveReplicaUpdate2),
+		on(SectorRetryProveReplicaUpdate{}, ProveReplicaUpdate),
 		on(SectorInvalidDealIDs{}, SnapDealsRecoverDealIDs),
 		on(SectorDealsExpired{}, SnapDealsDealsExpired),
 	),
@@ -280,7 +273,7 @@ var fsmPlanners = map[SectorState]func(events []statemachine.Event, state *Secto
 	TerminateFailed: planOne(
 	// SectorTerminating (global)
 	),
-	Removing: planOne(
+	Removing: planOneOrIgnore(
 		on(SectorRemoved{}, Removed),
 		on(SectorRemoveFailed{}, RemoveFailed),
 	),
@@ -483,10 +476,8 @@ func (m *Sealing) plan(events []statemachine.Event, state *SectorInfo) (func(sta
 		return m.handlePacking, processed, nil
 	case UpdateReplica:
 		return m.handleReplicaUpdate, processed, nil
-	case ProveReplicaUpdate1:
-		return m.handleProveReplicaUpdate1, processed, nil
-	case ProveReplicaUpdate2:
-		return m.handleProveReplicaUpdate2, processed, nil
+	case ProveReplicaUpdate:
+		return m.handleProveReplicaUpdate, processed, nil
 	case SubmitReplicaUpdate:
 		return m.handleSubmitReplicaUpdate, processed, nil
 	case ReplicaUpdateWait:

@@ -2057,7 +2057,7 @@ var sectorsBatchingPendingPreCommit = &cli.Command{
 
 var sectorsRefreshPieceMatchingCmd = &cli.Command{
 	Name:  "match-pending-pieces",
-	Usage: "force a refreshed match of pending pieces to open sectors without manually without waiting for more deals",
+	Usage: "force a refreshed match of pending pieces to open sectors without manually waiting for more deals",
 	Action: func(cctx *cli.Context) error {
 		nodeApi, closer, err := lcli.GetStorageMinerAPI(cctx)
 		if err != nil {

@@ -138,7 +138,6 @@ func DefaultStorageMiner() *StorageMiner {
 			AllowCommit:              true,
 			AllowUnseal:              true,
 			AllowReplicaUpdate:       true,
-			AllowProveReplicaUpdate1: true,
 			AllowProveReplicaUpdate2: true,
 
 			// Default to 10 - tcp should still be able to figure this out, and

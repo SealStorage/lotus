@@ -35,7 +35,7 @@ func (m *Sealing) handleReplicaUpdate(ctx statemachine.Context, sector SectorInf
 	})
 }
 
-func (m *Sealing) handleProveReplicaUpdate1(ctx statemachine.Context, sector SectorInfo) error {
+func (m *Sealing) handleProveReplicaUpdate(ctx statemachine.Context, sector SectorInfo) error {
 	if sector.UpdateSealed == nil || sector.UpdateUnsealed == nil {
 		return xerrors.Errorf("invalid sector %d with nil UpdateSealed or UpdateUnsealed output", sector.SectorNumber)
 	}
@@ -44,29 +44,15 @@ func (m *Sealing) handleProveReplicaUpdate1(ctx statemachine.Context, sector Sec
 	}
 	vanillaProofs, err := m.sealer.ProveReplicaUpdate1(sector.sealingCtx(ctx.Context()), m.minerSector(sector.SectorType, sector.SectorNumber), *sector.CommR, *sector.UpdateSealed, *sector.UpdateUnsealed)
 	if err != nil {
-		return ctx.Send(SectorProveReplicaUpdate1Failed{xerrors.Errorf("prove replica update (1) failed: %w", err)})
+		return ctx.Send(SectorProveReplicaUpdateFailed{xerrors.Errorf("prove replica update (1) failed: %w", err)})
 	}
-	return ctx.Send(SectorProveReplicaUpdate1{
-		Out: vanillaProofs,
-	})
-}
 
-func (m *Sealing) handleProveReplicaUpdate2(ctx statemachine.Context, sector SectorInfo) error {
-	if sector.UpdateSealed == nil || sector.UpdateUnsealed == nil {
-		return xerrors.Errorf("invalid sector %d with nil UpdateSealed or UpdateUnsealed output", sector.SectorNumber)
-	}
-	if sector.CommR == nil {
-		return xerrors.Errorf("invalid sector %d with nil CommR", sector.SectorNumber)
-	}
-	if sector.ProveReplicaUpdate1Out == nil {
-		return xerrors.Errorf("invalid sector %d with nil ProveReplicaUpdate1 output", sector.SectorNumber)
-	}
-	proof, err := m.sealer.ProveReplicaUpdate2(sector.sealingCtx(ctx.Context()), m.minerSector(sector.SectorType, sector.SectorNumber), *sector.CommR, *sector.UpdateSealed, *sector.UpdateUnsealed, sector.ProveReplicaUpdate1Out)
+	proof, err := m.sealer.ProveReplicaUpdate2(sector.sealingCtx(ctx.Context()), m.minerSector(sector.SectorType, sector.SectorNumber), *sector.CommR, *sector.UpdateSealed, *sector.UpdateUnsealed, vanillaProofs)
 	if err != nil {
-		return ctx.Send(SectorProveReplicaUpdate2Failed{xerrors.Errorf("prove replica update (2) failed: %w", err)})
+		return ctx.Send(SectorProveReplicaUpdateFailed{xerrors.Errorf("prove replica update (2) failed: %w", err)})
 
 	}
-	return ctx.Send(SectorProveReplicaUpdate2{
+	return ctx.Send(SectorProveReplicaUpdate{
 		Proof: proof,
 	})
 }

@@ -156,7 +156,7 @@ func (mgr *SectorCommittedManager) OnDealSectorPreCommitted(ctx context.Context,
 				cb(*sn, true, nil)
 				return false, nil
 			}
-			// Didn't findt he deal ID in this message, so keep looking
+			// Didn't find the deal ID in this message, so keep looking
 			return true, nil
 		}
 
@@ -280,9 +280,6 @@ func (mgr *SectorCommittedManager) OnDealSectorCommitted(ctx context.Context, pr
 }
 
 func dealSectorInReplicaUpdateSuccess(msg *types.Message, rec *types.MessageReceipt, res sealing.CurrentDealInfo) (*abi.SectorNumber, error) {
-	if msg.Method != miner.Methods.ProveReplicaUpdates {
-		return nil, xerrors.Errorf("unexpected method %d", msg.Method)
-	}
 	var params miner.ProveReplicaUpdatesParams
 	if err := params.UnmarshalCBOR(bytes.NewReader(msg.Params)); err != nil {
 		return nil, xerrors.Errorf("unmarshal prove replica update: %w", err)

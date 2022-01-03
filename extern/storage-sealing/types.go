@@ -92,13 +92,12 @@ type SectorInfo struct {
 	InvalidProofs uint64 // failed proof computations (doesn't validate with proof inputs; can't compute)
 
 	// CCUpdate
-	CCUpdate               bool
-	CCPieces               []Piece
-	UpdateSealed           *cid.Cid
-	UpdateUnsealed         *cid.Cid
-	ProveReplicaUpdate1Out storage.ReplicaVanillaProofs
-	ReplicaUpdateProof     storage.ReplicaUpdateProof
-	ReplicaUpdateMessage   *cid.Cid
+	CCUpdate             bool
+	CCPieces             []Piece
+	UpdateSealed         *cid.Cid
+	UpdateUnsealed       *cid.Cid
+	ReplicaUpdateProof   storage.ReplicaUpdateProof
+	ReplicaUpdateMessage *cid.Cid
 
 	// Faults
 	FaultReportMsg *cid.Cid

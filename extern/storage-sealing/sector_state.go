@@ -49,8 +49,7 @@ var ExistSectorStateList = map[SectorState]struct{}{
 	SnapDealsAddPiece:       {},
 	SnapDealsPacking:        {},
 	UpdateReplica:           {},
-	ProveReplicaUpdate1:     {},
-	ProveReplicaUpdate2:     {},
+	ProveReplicaUpdate:      {},
 	SubmitReplicaUpdate:     {},
 	ReplicaUpdateWait:       {},
 	FinalizeReplicaUpdate:   {},
@@ -61,6 +60,8 @@ var ExistSectorStateList = map[SectorState]struct{}{
 	AbortUpgrade:            {},
 }
 
+// cmd/lotus-miner/info.go defines CLI colors corresponding to these states
+// update files there when adding new states
 const (
 	UndefinedSectorState SectorState = ""
 
@@ -99,8 +100,7 @@ const (
 	SnapDealsAddPiece     SectorState = "SnapDealsAddPiece"
 	SnapDealsPacking      SectorState = "SnapDealsPacking"
 	UpdateReplica         SectorState = "UpdateReplica"
-	ProveReplicaUpdate1   SectorState = "ProveReplicaUpdate1"
-	ProveReplicaUpdate2   SectorState = "ProveReplicaUpdate2"
+	ProveReplicaUpdate    SectorState = "ProveReplicaUpdate"
 	SubmitReplicaUpdate   SectorState = "SubmitReplicaUpdate"
 	ReplicaUpdateWait     SectorState = "ReplicaUpdateWait"
 	FinalizeReplicaUpdate SectorState = "FinalizeReplicaUpdate"
@@ -143,7 +143,7 @@ func toStatState(st SectorState, finEarly bool) statSectorState {
 	switch st {
 	case UndefinedSectorState, Empty, WaitDeals, AddPiece, AddPieceFailed, SnapDealsWaitDeals, SnapDealsAddPiece:
 		return sstStaging
-	case Packing, GetTicket, PreCommit1, PreCommit2, PreCommitting, PreCommitWait, SubmitPreCommitBatch, PreCommitBatchWait, WaitSeed, Committing, CommitFinalize, FinalizeSector, SnapDealsPacking, UpdateReplica, ProveReplicaUpdate1, ProveReplicaUpdate2, FinalizeReplicaUpdate:
+	case Packing, GetTicket, PreCommit1, PreCommit2, PreCommitting, PreCommitWait, SubmitPreCommitBatch, PreCommitBatchWait, WaitSeed, Committing, CommitFinalize, FinalizeSector, SnapDealsPacking, UpdateReplica, ProveReplicaUpdate, FinalizeReplicaUpdate:
 		return sstSealing
 	case SubmitCommit, CommitWait, SubmitCommitAggregate, CommitAggregateWait, SubmitReplicaUpdate, ReplicaUpdateWait:
 		if finEarly {
