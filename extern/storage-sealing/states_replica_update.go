@@ -82,12 +82,6 @@ func (m *Sealing) handleSubmitReplicaUpdate(ctx statemachine.Context, sector Sec
 	if err := checkReplicaUpdate(ctx.Context(), m.maddr, sector, tok, m.Api); err != nil {
 		return ctx.Send(SectorSubmitReplicaUpdateFailed{})
 	}
-	// XXX use config for various collateral things
-
-	// cfg, err := m.getConfig()
-	// if err != nil {
-	// 	return xerrors.Errorf("getting config: %w", err)
-	// }
 
 	sl, err := m.Api.StateSectorPartition(ctx.Context(), m.maddr, sector.SectorNumber, tok)
 	if err != nil {
@@ -118,19 +112,63 @@ func (m *Sealing) handleSubmitReplicaUpdate(ctx statemachine.Context, sector Sec
 		return ctx.Send(SectorSubmitReplicaUpdateFailed{})
 	}
 
-	// XXX fees need to be better handled
+	cfg, err := m.getConfig()
+	if err != nil {
+		return xerrors.Errorf("getting config: %w", err)
+	}
+
+	onChainInfo, err := m.Api.StateSectorGetInfo(ctx.Context(), m.maddr, sector.SectorNumber, tok)
+	if err != nil {
+		log.Errorf("handleSubmitReplicaUpdate: api error, not proceeding: %+v", err)
+		return nil
+	}
+	sp, err := m.currentSealProof(ctx.Context())
+	if err != nil {
+		log.Errorf("sealer failed to return current seal proof not proceeding: %+v", err)
+		return nil
+	}
+	virtualPCI := miner.SectorPreCommitInfo{
+		SealProof:    sp,
+		SectorNumber: sector.SectorNumber,
+		SealedCID:    *sector.UpdateSealed,
+		//SealRandEpoch: 0,
+		DealIDs:    sector.dealIDs(),
+		Expiration: onChainInfo.Expiration,
+		//ReplaceCapacity: false,
+		//ReplaceSectorDeadline: 0,
+		//ReplaceSectorPartition: 0,
+		//ReplaceSectorNumber: 0,
+	}
+
+	collateral, err := m.Api.StateMinerInitialPledgeCollateral(ctx.Context(), m.maddr, virtualPCI, tok)
+	if err != nil {
+		return xerrors.Errorf("getting initial pledge collateral: %w", err)
+	}
+
+	collateral = big.Sub(collateral, onChainInfo.InitialPledge)
+	if collateral.LessThan(big.Zero()) {
+		collateral = big.Zero()
+	}
+
+	collateral, err = collateralSendAmount(ctx.Context(), m.Api, m.maddr, cfg, collateral)
+	if err != nil {
+		log.Errorf("collateral send amount failed not proceeding: %+v", err)
+		return nil
+	}
+
+	goodFunds := big.Add(collateral, big.Int(m.feeCfg.MaxCommitGasFee))
+
 	mi, err := m.Api.StateMinerInfo(ctx.Context(), m.maddr, tok)
 	if err != nil {
 		log.Errorf("handleSubmitReplicaUpdate: api error, not proceeding: %+v", err)
 		return nil
 	}
 
-	from, _, err := m.addrSel(ctx.Context(), mi, api.CommitAddr, big.Zero(), big.Zero())
+	from, _, err := m.addrSel(ctx.Context(), mi, api.CommitAddr, goodFunds, collateral)
 	if err != nil {
 		log.Errorf("no good address to send replica update message from: %+v", err)
 		return ctx.Send(SectorSubmitReplicaUpdateFailed{})
 	}
-	// XXX fees need to be better handled
 	mcid, err := m.Api.SendMsg(ctx.Context(), from, m.maddr, miner.Methods.ProveReplicaUpdates, big.Zero(), big.Int(m.feeCfg.MaxCommitGasFee), enc.Bytes())
 	if err != nil {
 		log.Errorf("handleSubmitReplicaUpdate: error sending message: %+v", err)
@@ -142,7 +180,8 @@ func (m *Sealing) handleSubmitReplicaUpdate(ctx statemachine.Context, sector Sec
 
 func (m *Sealing) handleReplicaUpdateWait(ctx statemachine.Context, sector SectorInfo) error {
 	if sector.ReplicaUpdateMessage == nil {
-		panic("handling error states and events")
+		log.Errorf("handleReplicaUpdateWait: no replica update message cid recorded")
+		return ctx.Send(SectorSubmitReplicaUpdateFailed{})
 	}
 
 	mw, err := m.Api.StateWaitMsg(ctx.Context(), *sector.ReplicaUpdateMessage)
