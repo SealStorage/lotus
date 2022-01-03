@@ -154,15 +154,7 @@ func (proofVerifier) VerifyWinningPoSt(ctx context.Context, info proof.WinningPo
 	_, span := trace.StartSpan(ctx, "VerifyWinningPoSt")
 	defer span.End()
 
-	// Transform winning post verify to use the correct sealed cid with respect to the lookback
-	ffiInfo := ffiproof.WinningPoStVerifyInfo{
-		Randomness:        info.Randomness,
-		Proofs:            info.Proofs,
-		Prover:            info.Prover,
-		ChallengedSectors: info.ChallengedSectors,
-	}
-
-	return ffi.VerifyWinningPoSt(ffiInfo)
+	return ffi.VerifyWinningPoSt(info)
 }
 
 func (proofVerifier) VerifyWindowPoSt(ctx context.Context, info proof.WindowPoStVerifyInfo) (bool, error) {

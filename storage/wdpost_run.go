@@ -636,7 +636,6 @@ func (s *WindowPoStScheduler) runPoStCycle(ctx context.Context, di dline.Info, t
 				return nil, err
 			}
 
-			log.Errorf("actually generating window post")
 			defer func() {
 				if r := recover(); r != nil {
 					log.Errorf("recover: %s", r)
@@ -644,7 +643,7 @@ func (s *WindowPoStScheduler) runPoStCycle(ctx context.Context, di dline.Info, t
 			}()
 			postOut, ps, err := s.prover.GenerateWindowPoSt(ctx, abi.ActorID(mid), xsinfos, append(abi.PoStRandomness{}, rand...))
 			elapsed := time.Since(tsStart)
-			log.Infof("computing window post", "batch", batchIdx, "elapsed", elapsed)
+			log.Infow("computing window post", "batch", batchIdx, "elapsed", elapsed)
 			if err != nil {
 				log.Errorf("error generating window post: %s", err)
 			}
@@ -667,11 +666,10 @@ func (s *WindowPoStScheduler) runPoStCycle(ctx context.Context, di dline.Info, t
 				}
 
 				if !bytes.Equal(checkRand, rand) {
-					log.Warnf("windowpost randomness changed", "old", rand, "new", checkRand, "ts-height", ts.Height(), "challenge-height", di.Challenge, "tsk", ts.Key())
+					log.Warnw("windowpost randomness changed", "old", rand, "new", checkRand, "ts-height", ts.Height(), "challenge-height", di.Challenge, "tsk", ts.Key())
 					rand = checkRand
 					continue
 				}
-				log.Errorf("D")
 
 				// If we generated an incorrect proof, try again.
 				sinfos := make([]proof7.SectorInfo, len(xsinfos))
@@ -688,15 +686,13 @@ func (s *WindowPoStScheduler) runPoStCycle(ctx context.Context, di dline.Info, t
 					ChallengedSectors: sinfos,
 					Prover:            abi.ActorID(mid),
 				}); err != nil {
-					log.Errorf("window post verification failed", "post", postOut, "error", err)
+					log.Errorw("window post verification failed", "post", postOut, "error", err)
 					time.Sleep(5 * time.Second)
 					continue
 				} else if !correct {
-					log.Errorf("generated incorrect window post proof", "post", postOut, "error", err)
+					log.Errorw("generated incorrect window post proof", "post", postOut, "error", err)
 					continue
 				}
-
-				log.Errorf("we got a correct window post")
 
 				// Proof generation successful, stop retrying
 				somethingToProve = true
@@ -706,7 +702,7 @@ func (s *WindowPoStScheduler) runPoStCycle(ctx context.Context, di dline.Info, t
 			}
 
 			// Proof generation failed, so retry
-			log.Errorf("Retry")
+			log.Debugf("Proof generation failed, retry")
 			if len(ps) == 0 {
 				// If we didn't skip any new sectors, we failed
 				// for some other reason and we need to abort.
@@ -714,34 +710,28 @@ func (s *WindowPoStScheduler) runPoStCycle(ctx context.Context, di dline.Info, t
 			}
 			// TODO: maybe mark these as faulty somewhere?
 
-			log.Warnf("generate window post skipped sectors", "sectors", ps, "error", err, "try", retries)
+			log.Warnw("generate window post skipped sectors", "sectors", ps, "error", err, "try", retries)
 
 			// Explicitly make sure we haven't aborted this PoSt
 			// (GenerateWindowPoSt may or may not check this).
 			// Otherwise, we could try to continue proving a
 			// deadline after the deadline has ended.
 			if ctx.Err() != nil {
-				log.Warnf("aborting PoSt due to context cancellation", "error", ctx.Err(), "deadline", di.Index)
+				log.Warnw("aborting PoSt due to context cancellation", "error", ctx.Err(), "deadline", di.Index)
 				return nil, ctx.Err()
 			}
 
 			for _, sector := range ps {
 				postSkipped.Set(uint64(sector.Number))
 			}
-			log.Errorf("I")
-
 		}
 
 		// Nothing to prove for this batch, try the next batch
 		if !somethingToProve {
 			continue
 		}
-		log.Errorf("J")
-
 		posts = append(posts, params)
 	}
-	log.Errorf("K")
-
 	return posts, nil
 }
 
